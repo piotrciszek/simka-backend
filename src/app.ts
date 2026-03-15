@@ -12,10 +12,12 @@ import usersRoutes from './routes/users';
 import fs from 'fs';
 import path from 'path';
 import * as iconv from 'iconv-lite';
+import serveIndex from 'serve-index';
 
 dotenv.config();
 
 const app = express();
+const csvDir = process.env.CSV_DIR || path.join(__dirname, '../uploads/csv');
 
 app.use(
   cors({
@@ -42,6 +44,15 @@ app.use('/uploads', (req, res, next) => {
     next();
   }
 });
+
+app.use('/csv', express.static(csvDir));
+app.use(
+  '/csv',
+  serveIndex(csvDir, {
+    icons: true,
+    view: 'details',
+  }),
+);
 
 // Routes
 app.use('/auth', authRoutes);
