@@ -1,0 +1,33 @@
+Dla backendu .gitignore:
+gitignore# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment files
+.env
+.env.production
+
+# Uploads (dev files — not for repo)
+uploads/boxes/
+uploads/pbp/
+uploads/html/
+uploads/csv/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/mcp.json
+.history/*
