@@ -181,18 +181,24 @@ router.get(
         return;
       }
 
-      const files = fs
+      const items = fs
         .readdirSync(csvDir)
-        .filter(f => f.endsWith('.csv'))
-        .map(f => ({
-          filename: f,
-          filepath: path.join(csvDir, f),
-          size: fs.statSync(path.join(csvDir, f)).size,
-          modifiedAt: fs.statSync(path.join(csvDir, f)).mtime,
-        }))
-        .sort((a, b) => b.modifiedAt.getTime() - a.modifiedAt.getTime());
+        .map(f => {
+          const stat = fs.statSync(path.join(csvDir, f));
+          return {
+            filename: f,
+            size: stat.isDirectory() ? null : stat.size,
+            modifiedAt: stat.mtime,
+            isDirectory: stat.isDirectory(),
+          };
+        })
+        .sort((a, b) => {
+          if (a.isDirectory && !b.isDirectory) return -1;
+          if (!a.isDirectory && b.isDirectory) return 1;
+          return b.modifiedAt.getTime() - a.modifiedAt.getTime();
+        });
 
-      res.json(files);
+      res.json(items);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Błąd odczytu folderu' });

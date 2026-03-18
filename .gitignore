@@ -10,6 +10,7 @@ dist/
 .env.production
 
 # Uploads (dev files — not for repo)
+uploads/
 uploads/boxes/
 uploads/pbp/
 uploads/html/
