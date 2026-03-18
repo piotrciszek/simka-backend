@@ -5,6 +5,8 @@ import authRoutes from './routes/auth';
 import boxesRouter from './routes/boxes';
 import csvRoutes from './routes/csv';
 import newsRoutes from './routes/news';
+import pbpRoutes from './routes/pbp';
+import saveRoutes from './routes/save';
 import tacticsRoutes from './routes/tactics';
 import teamsRoutes from './routes/teams';
 import usersRoutes from './routes/users';
@@ -18,6 +20,8 @@ dotenv.config();
 
 const app = express();
 const csvDir = process.env.CSV_DIR || path.join(__dirname, '../uploads/csv');
+const pbpDir = process.env.PBP_DIR || path.join(__dirname, '../uploads/pbp');
+const saveDir = process.env.SAVE_DIR || path.join(__dirname, '../uploads/save');
 
 app.use(
   cors({
@@ -31,6 +35,18 @@ app.use(
 
 app.use(express.json());
 
+// Routes
+app.use('/auth', authRoutes);
+app.use('/boxes', boxesRouter);
+app.use('/csv', csvRoutes);
+app.use('/news', newsRoutes);
+app.use('/pbp', pbpRoutes);
+app.use('/save', saveRoutes);
+app.use('/tactics', tacticsRoutes);
+app.use('/teams', teamsRoutes);
+app.use('/users', usersRoutes);
+
+// Static files
 app.use('/uploads', (req, res, next) => {
   const filePath = path.join(__dirname, '../uploads', req.path);
   if (filePath.endsWith('.htm') || filePath.endsWith('.html')) {
@@ -54,14 +70,20 @@ app.use(
   }),
 );
 
-// Routes
-app.use('/auth', authRoutes);
-app.use('/boxes', boxesRouter);
-app.use('/csv', csvRoutes);
-app.use('/news', newsRoutes);
-app.use('/tactics', tacticsRoutes);
-app.use('/teams', teamsRoutes);
-app.use('/users', usersRoutes);
+app.use(
+  '/pbp',
+  (req, res, next) => {
+    if (req.path.endsWith('.txt')) {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    }
+    next();
+  },
+  express.static(pbpDir),
+);
+
+app.use('/save', express.static(saveDir));
+
+app.use('/save', serveIndex(saveDir, { icons: true, view: 'details' }));
 
 // Health check
 app.get('/health', (req, res) => {
