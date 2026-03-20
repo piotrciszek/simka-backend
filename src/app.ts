@@ -22,6 +22,7 @@ const app = express();
 const csvDir = process.env.CSV_DIR || path.join(__dirname, '../uploads/csv');
 const pbpDir = process.env.PBP_DIR || path.join(__dirname, '../uploads/pbp');
 const saveDir = process.env.SAVE_DIR || path.join(__dirname, '../uploads/save');
+const imgDir = process.env.IMG_DIR || path.join(__dirname, '../uploads/img');
 
 app.use(
   cors({
@@ -82,8 +83,9 @@ app.use(
 );
 
 app.use('/save', express.static(saveDir));
-
 app.use('/save', serveIndex(saveDir, { icons: true, view: 'details' }));
+
+app.use('/img', express.static(imgDir));
 
 // Health check
 app.get('/health', (req, res) => {

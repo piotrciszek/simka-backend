@@ -320,4 +320,60 @@ router.get(
   },
 );
 
+// GET /tactics/all-lineups — lista wszystkich drużyn z ich aktualną taktyką (wszyscy zalogowani)
+router.get('/all-lineups', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const [rows]: any = await pool.query(
+      `SELECT t.id, t.name as teamName, t.logo_path,
+              tac.data_approved, tac.data_pending,
+              tac.status, tac.approved_at, tac.submitted_at
+       FROM teams t
+       LEFT JOIN tactics tac ON tac.team_id = t.id
+       WHERE t.is_active = true
+       ORDER BY t.name`,
+    );
+
+    const result = rows.map((row: any) => {
+      // Zdecyduj które dane pokazac
+      let data = null;
+      let displayStatus = 'brak';
+
+      const approved = row.data_approved ?? null;
+      const pending = row.data_pending ?? null;
+
+      if (approved && pending) {
+        // Porownaj daty — nowszy wygrywa
+        const approvedDate = new Date(row.approved_at || 0);
+        const pendingDate = new Date(row.submitted_at || 0);
+        if (pendingDate > approvedDate) {
+          data = pending;
+          displayStatus = 'pending';
+        } else {
+          data = approved;
+          displayStatus = 'approved';
+        }
+      } else if (approved) {
+        data = approved;
+        displayStatus = 'approved';
+      } else if (pending) {
+        data = pending;
+        displayStatus = 'pending';
+      }
+
+      return {
+        teamId: row.id,
+        teamName: row.teamName,
+        logo_path: row.logo_path,
+        displayStatus,
+        data,
+      };
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Błąd serwera' });
+  }
+});
+
 export default router;
