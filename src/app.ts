@@ -19,6 +19,7 @@ import serveIndex from 'serve-index';
 dotenv.config();
 
 const app = express();
+const boxesDir = process.env.BOXES_DIR || path.join(__dirname, '../uploads/boxes');
 const csvDir = process.env.CSV_DIR || path.join(__dirname, '../uploads/csv');
 const pbpDir = process.env.PBP_DIR || path.join(__dirname, '../uploads/pbp');
 const saveDir = process.env.SAVE_DIR || path.join(__dirname, '../uploads/save');
@@ -61,6 +62,8 @@ app.use('/uploads', (req, res, next) => {
     next();
   }
 });
+
+app.use('/html/boxes', express.static(boxesDir));
 
 app.use('/csv', express.static(csvDir));
 app.use(
