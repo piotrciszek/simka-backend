@@ -283,4 +283,30 @@ router.post(
   },
 );
 
+// GET /csv/file/:filename — zwraca surowy plik CSV jako tekst (admin/komisz)
+router.get(
+  '/file/:filename',
+  requireRole('admin', 'komisz'),
+  (req: AuthRequest, res: Response): void => {
+    const filename = String(req.params['filename']);
+
+    // Zabezpieczenie przed path traversal (np. "../../etc/passwd")
+    if (filename.includes('..') || filename.includes('/')) {
+      res.status(400).json({ message: 'Nieprawidłowa nazwa pliku' });
+      return;
+    }
+
+    const csvDir = process.env.CSV_DIR || path.join(process.cwd(), 'uploads/csv');
+    const filepath = path.join(csvDir, filename);
+
+    if (!fs.existsSync(filepath)) {
+      res.status(404).json({ message: 'Plik nie istnieje' });
+      return;
+    }
+
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    fs.createReadStream(filepath).pipe(res);
+  },
+);
+
 export default router;
