@@ -1,12 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
+// Ten typ PRZED middleware authenticate (user może nie istnieć)
 export interface AuthRequest extends Request {
   user?: {
     id: number;
     username: string;
     role: 'admin' | 'komisz' | 'user';
   };
+}
+
+// Ten typ w route'ach chronionych przez authenticate (user na pewno istnieje)
+export interface AuthenticatedRequest extends AuthRequest {
+  user: NonNullable<AuthRequest['user']>;
 }
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {

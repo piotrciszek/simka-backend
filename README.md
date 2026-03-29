@@ -100,6 +100,11 @@ node dist/server.js
 | `komisz` | Approve tactics, manage users (no delete), view all teams |
 | `user`   | Own team tactics only                                     |
 
+## TODO
+
+- [ ] **Migracja typów auth** — zamienić `AuthRequest` na `AuthenticatedRequest` we wszystkich chronionych route'ach, żeby usunąć `req.user!` (wykrzykniki). `AuthenticatedRequest` jest już zdefiniowany w `middleware/auth.ts`.
+- [ ] **Typy DB zamiast `any`** — stworzyć `src/types/db.ts` z interfejsami dla tabel (np. `UserRow`, `TeamRow`) i zastąpić `[rows]: any` w route'ach przez `pool.query<UserRow[]>(...)`.
+
 ## Environment Variables
 
 | Variable         | Description                  | Dev default     |
