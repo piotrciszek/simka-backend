@@ -53,21 +53,9 @@ router.post(
       return;
     }
 
+    // Parsuj CSV przed transakcją — żeby nie trzymać połączenia podczas I/O
+    const players: any[] = [];
     try {
-      // Dezaktywuj poprzedni aktywny CSV
-      await pool.query('UPDATE csv_uploads SET is_active = false');
-
-      // Zapisz nowy upload
-      const [result]: any = await pool.query(
-        'INSERT INTO csv_uploads (filename, filepath, season, is_active, uploaded_by) VALUES (?, ?, ?, true, ?)',
-        [req.file.originalname, req.file.path, season, req.user!.id],
-      );
-
-      const csvUploadId = result.insertId;
-
-      // Parsuj CSV i zapisz graczy
-      const players: any[] = [];
-
       const parser = fs.createReadStream(req.file.path).pipe(
         parse({
           columns: true, // pierwsza linia to nagłówki
@@ -78,26 +66,51 @@ router.post(
 
       for await (const row of parser) {
         players.push([
-          csvUploadId,
+          0, // csvUploadId — wypełnimy po INSERT
           row.FirstName || '',
           row.LastName || '',
           row.Position || '',
           row.Team || null,
         ]);
       }
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ message: 'Błąd parsowania CSV' });
+      return;
+    }
 
-      if (players.length === 0) {
-        res.status(400).json({ message: 'CSV jest pusty lub nieprawidłowy' });
-        return;
-      }
+    if (players.length === 0) {
+      res.status(400).json({ message: 'CSV jest pusty lub nieprawidłowy' });
+      return;
+    }
+
+    // Transakcja — albo wszystko albo nic
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // Dezaktywuj poprzedni aktywny CSV
+      await connection.query('UPDATE csv_uploads SET is_active = false');
+
+      // Zapisz nowy upload
+      const [result]: any = await connection.query(
+        'INSERT INTO csv_uploads (filename, filepath, season, is_active, uploaded_by) VALUES (?, ?, ?, true, ?)',
+        [req.file.originalname, req.file.path, season, req.user!.id],
+      );
+
+      const csvUploadId = result.insertId;
+
+      // Uzupełnij csvUploadId w każdym wierszu
+      const playersWithId = players.map(p => [csvUploadId, p[1], p[2], p[3], p[4]]);
 
       // Usuń starych graczy i wstaw nowych
-      await pool.query('DELETE FROM players WHERE csv_upload_id != ?', [csvUploadId]);
-
-      await pool.query(
+      await connection.query('DELETE FROM players WHERE csv_upload_id != ?', [csvUploadId]);
+      await connection.query(
         'INSERT INTO players (csv_upload_id, first_name, last_name, position, team) VALUES ?',
-        [players],
+        [playersWithId],
       );
+
+      await connection.commit();
 
       res.status(201).json({
         message: 'CSV wgrany pomyślnie',
@@ -105,8 +118,11 @@ router.post(
         playersCount: players.length,
       });
     } catch (error) {
+      await connection.rollback();
       console.error(error);
       res.status(500).json({ message: 'Błąd serwera' });
+    } finally {
+      connection.release();
     }
   },
 );
@@ -235,18 +251,9 @@ router.post(
       return;
     }
 
+    // Parsuj CSV przed transakcją — żeby nie trzymać połączenia podczas I/O
+    const players: any[] = [];
     try {
-      await pool.query('UPDATE csv_uploads SET is_active = false');
-
-      const [result]: any = await pool.query(
-        'INSERT INTO csv_uploads (filename, filepath, season, is_active, uploaded_by) VALUES (?, ?, ?, true, ?)',
-        [filename, filepath, season, req.user!.id],
-      );
-
-      const csvUploadId = result.insertId;
-
-      const players: any[] = [];
-
       const parser = fs.createReadStream(filepath).pipe(
         parse({
           columns: true,
@@ -256,26 +263,42 @@ router.post(
       );
 
       for await (const row of parser) {
-        players.push([
-          csvUploadId,
-          row.FirstName || '',
-          row.LastName || '',
-          row.Position || '',
-          row.Team || null,
-        ]);
+        players.push([row.FirstName || '', row.LastName || '', row.Position || '', row.Team || null]);
       }
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ message: 'Błąd parsowania CSV' });
+      return;
+    }
 
-      if (players.length === 0) {
-        res.status(400).json({ message: 'CSV jest pusty lub nieprawidłowy' });
-        return;
-      }
+    if (players.length === 0) {
+      res.status(400).json({ message: 'CSV jest pusty lub nieprawidłowy' });
+      return;
+    }
 
-      await pool.query('DELETE FROM players WHERE csv_upload_id != ?', [csvUploadId]);
+    // Transakcja — albo wszystko albo nic
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
 
-      await pool.query(
-        'INSERT INTO players (csv_upload_id, first_name, last_name, position, team) VALUES ?',
-        [players],
+      await connection.query('UPDATE csv_uploads SET is_active = false');
+
+      const [result]: any = await connection.query(
+        'INSERT INTO csv_uploads (filename, filepath, season, is_active, uploaded_by) VALUES (?, ?, ?, true, ?)',
+        [filename, filepath, season, req.user!.id],
       );
+
+      const csvUploadId = result.insertId;
+
+      const playersWithId = players.map(p => [csvUploadId, p[0], p[1], p[2], p[3]]);
+
+      await connection.query('DELETE FROM players WHERE csv_upload_id != ?', [csvUploadId]);
+      await connection.query(
+        'INSERT INTO players (csv_upload_id, first_name, last_name, position, team) VALUES ?',
+        [playersWithId],
+      );
+
+      await connection.commit();
 
       res.status(201).json({
         message: 'CSV załadowany pomyślnie',
@@ -283,8 +306,11 @@ router.post(
         playersCount: players.length,
       });
     } catch (error) {
+      await connection.rollback();
       console.error(error);
       res.status(500).json({ message: 'Błąd serwera' });
+    } finally {
+      connection.release();
     }
   },
 );
