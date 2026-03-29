@@ -148,7 +148,7 @@ router.put(
     }
 
     try {
-      const [rows]: any = await pool.query('SELECT id, is_active FROM users WHERE id = ?', [
+      const [rows]: any = await pool.query('SELECT id, role, is_active FROM users WHERE id = ?', [
         userId,
       ]);
 
