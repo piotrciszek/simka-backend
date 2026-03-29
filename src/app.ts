@@ -19,6 +19,9 @@ import serveIndex from 'serve-index';
 dotenv.config();
 
 const app = express();
+
+// Zaufaj pierwszemu proxy (nginx), req.ip zwraca prawdziwy adres klienta z x-forwarded-for
+app.set('trust proxy', 1);
 const boxesDir = process.env.BOXES_DIR || path.join(__dirname, '../uploads/boxes');
 const csvDir = process.env.CSV_DIR || path.join(__dirname, '../uploads/csv');
 const pbpDir = process.env.PBP_DIR || path.join(__dirname, '../uploads/pbp');

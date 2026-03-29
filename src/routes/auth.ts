@@ -35,8 +35,8 @@ router.post('/login', async (req, res): Promise<void> => {
       return;
     }
 
-    // Zapis aktywności
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    // Zapis aktywności, req.ip działa poprawnie dzięki "trust proxy" ustawionemu w app.ts
+    const ip = req.ip ?? 'unknown';
     await pool.query('INSERT INTO user_activity (user_id, ip_address) VALUES (?, ?)', [
       user.id,
       ip,
