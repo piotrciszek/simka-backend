@@ -103,6 +103,8 @@ node dist/server.js
 ## TODO
 
 - [ ] **Migracja typów auth** — zamienić `AuthRequest` na `AuthenticatedRequest` we wszystkich chronionych route'ach, żeby usunąć `req.user!` (wykrzykniki). `AuthenticatedRequest` jest już zdefiniowany w `middleware/auth.ts`.
+- [ ] **Helper `canAccessTeam(user, ownerId)`** — ten sam blok sprawdzania właściciela drużyny powtarza się 3 razy w `tactics.ts` (linie GET/PUT draft/PUT submit). Wydzielić do osobnej funkcji.
+- [ ] **Wydzielenie logiki parsowania CSV** — identyczny kod parsowania i zapisu graczy w `/upload` i `/load-file` w `csv.ts`.
 - [ ] **Typy DB zamiast `any`** — stworzyć `src/types/db.ts` z interfejsami dla tabel (np. `UserRow`, `TeamRow`) i zastąpić `[rows]: any` w route'ach przez `pool.query<UserRow[]>(...)`.
 
 ## Environment Variables

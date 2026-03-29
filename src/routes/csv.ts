@@ -33,6 +33,7 @@ const upload = multer({
       cb(new Error('Tylko pliki CSV są dozwolone'));
     }
   },
+  limits: { fileSize: 10 * 1024 * 1024 }, // max 10 MB
 });
 
 // POST /csv/upload — wgraj nowy CSV (tylko admin)
