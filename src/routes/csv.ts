@@ -218,6 +218,12 @@ router.post(
       return;
     }
 
+    // Zabezpieczenie przed path traversal (np. "../../etc/passwd")
+    if (filename.includes('..') || filename.includes('/')) {
+      res.status(400).json({ message: 'Nieprawidłowa nazwa pliku' });
+      return;
+    }
+
     // const filepath = path.join('/public_html/csv', filename);
     const filepath = path.join(
       process.env.CSV_DIR || path.join(process.cwd(), 'uploads/csv'),
