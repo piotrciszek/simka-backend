@@ -227,6 +227,12 @@ router.put(
     }
 
     try {
+      const [rows]: any = await pool.query('SELECT id FROM users WHERE id = ?', [userId]);
+      if (rows.length === 0) {
+        res.status(404).json({ message: 'Użytkownik nie istnieje' });
+        return;
+      }
+
       await pool.query('UPDATE users SET role = ? WHERE id = ?', [role, userId]);
       res.json({ message: 'Rola zmieniona' });
     } catch (error) {
