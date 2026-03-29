@@ -5,6 +5,13 @@ import { authenticate, requireRole, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
+// Parsuje param URL do liczby dodatniej, zwraca null jeśli nieprawidłowy
+const parseId = (param: string | string[] | undefined): number | null => {
+  const value = Array.isArray(param) ? param[0] : param;
+  const id = parseInt(value ?? '', 10);
+  return isNaN(id) || id <= 0 ? null : id;
+};
+
 // Wszystkie routes wymagają zalogowania
 router.use(authenticate);
 
@@ -99,7 +106,11 @@ router.put(
   requireRole('admin', 'komisz'),
   async (req: AuthRequest, res: Response): Promise<void> => {
     const { newPassword } = req.body;
-    const userId = parseInt(req.params['id'] as string);
+    const userId = parseId(req.params['id']);
+    if (userId === null) {
+      res.status(400).json({ message: 'Nieprawidłowe ID użytkownika' });
+      return;
+    }
 
     if (!newPassword || newPassword.length < 8) {
       res.status(400).json({ message: 'Hasło musi mieć minimum 8 znaków' });
@@ -140,7 +151,11 @@ router.put(
   '/:id/toggle-active',
   requireRole('admin', 'komisz'),
   async (req: AuthRequest, res: Response): Promise<void> => {
-    const userId = parseInt(req.params['id'] as string);
+    const userId = parseId(req.params['id']);
+    if (userId === null) {
+      res.status(400).json({ message: 'Nieprawidłowe ID użytkownika' });
+      return;
+    }
 
     if (userId === req.user!.id) {
       res.status(400).json({ message: 'Nie możesz zablokować własnego konta' });
@@ -188,7 +203,11 @@ router.put(
   '/:id/role',
   requireRole('admin', 'komisz'),
   async (req: AuthRequest, res: Response): Promise<void> => {
-    const userId = parseInt(req.params['id'] as string);
+    const userId = parseId(req.params['id']);
+    if (userId === null) {
+      res.status(400).json({ message: 'Nieprawidłowe ID użytkownika' });
+      return;
+    }
     const { role } = req.body;
 
     if (!['admin', 'komisz', 'user'].includes(role)) {
@@ -222,7 +241,11 @@ router.put(
   '/:id/team',
   requireRole('admin', 'komisz'),
   async (req: AuthRequest, res: Response): Promise<void> => {
-    const userId = parseInt(req.params['id'] as string);
+    const userId = parseId(req.params['id']);
+    if (userId === null) {
+      res.status(400).json({ message: 'Nieprawidłowe ID użytkownika' });
+      return;
+    }
     const { teamId } = req.body;
 
     try {
@@ -242,7 +265,11 @@ router.put(
 
 // PUT /users/:id/email — zmiana emaila (tylko zalogowany użytkownik)
 router.put('/:id/email', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
-  const userId = parseInt(req.params['id'] as string);
+  const userId = parseId(req.params['id']);
+  if (userId === null) {
+    res.status(400).json({ message: 'Nieprawidłowe ID użytkownika' });
+    return;
+  }
   const { email } = req.body;
 
   // Użytkownik może zmieniać tylko swój email
@@ -265,7 +292,11 @@ router.delete(
   '/:id',
   requireRole('admin'),
   async (req: AuthRequest, res: Response): Promise<void> => {
-    const userId = parseInt(req.params['id'] as string);
+    const userId = parseId(req.params['id']);
+    if (userId === null) {
+      res.status(400).json({ message: 'Nieprawidłowe ID użytkownika' });
+      return;
+    }
 
     if (userId === req.user!.id) {
       res.status(400).json({ message: 'Nie możesz usunąć własnego konta' });
