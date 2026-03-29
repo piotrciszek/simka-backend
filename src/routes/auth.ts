@@ -16,8 +16,9 @@ router.post('/login', async (req, res): Promise<void> => {
   }
 
   try {
+    // tylko potrzebne kolumny
     const [rows]: any = await pool.query(
-      'SELECT * FROM users WHERE username = ? AND is_active = true',
+      'SELECT id, username, role, password_hash, must_change_password FROM users WHERE username = ? AND is_active = true',
       [username],
     );
 
@@ -81,7 +82,10 @@ router.post(
     }
 
     try {
-      const [rows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [req.user!.id]);
+      // Potrzebujemy tylko hash hasła do weryfikacji
+      const [rows]: any = await pool.query('SELECT password_hash FROM users WHERE id = ?', [
+        req.user!.id,
+      ]);
 
       const user = rows[0];
       const passwordMatch = await bcrypt.compare(currentPassword, user.password_hash);
