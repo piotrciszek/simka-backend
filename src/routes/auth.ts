@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import pool from '../config/db';
-import { authenticate, AuthRequest } from '../middleware/auth';
+import { authenticate, requireRole, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -111,14 +111,13 @@ router.post(
 );
 
 // GET /auth/activity - admin i komisz
-router.get('/activity', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
-  if (req.user!.role !== 'admin' && req.user!.role !== 'komisz') {
-    res.status(403).json({ message: 'Brak dostępu' });
-    return;
-  }
-
-  try {
-    const [rows]: any = await pool.query(`
+router.get(
+  '/activity',
+  authenticate,
+  requireRole('admin', 'komisz'),
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const [rows]: any = await pool.query(`
       SELECT 
         u.id,
         u.username,
@@ -137,11 +136,12 @@ router.get('/activity', authenticate, async (req: AuthRequest, res: Response): P
       ORDER BY ua.logged_at IS NULL, ua.logged_at DESC
     `);
 
-    res.json(rows);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Błąd serwera' });
-  }
-});
+      res.json(rows);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Błąd serwera' });
+    }
+  },
+);
 
 export default router;
