@@ -16,7 +16,7 @@ const parseId = (param: string | string[] | undefined): number | null => {
 router.use(authenticate);
 
 // GET /users/gm-list — lista GM-ów z przypisanymi drużynami (admin, komisz)
-router.get('/gm-list', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/gm-list', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const [rows]: any = await pool.query(
       `SELECT t.name as teamName, t.logo_path, u.username, u.email
@@ -264,7 +264,7 @@ router.put(
 );
 
 // PUT /users/:id/email — zmiana emaila (tylko zalogowany użytkownik)
-router.put('/:id/email', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/:id/email', async (req: AuthRequest, res: Response): Promise<void> => {
   const userId = parseId(req.params['id']);
   if (userId === null) {
     res.status(400).json({ message: 'Nieprawidłowe ID użytkownika' });
