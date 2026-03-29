@@ -120,8 +120,8 @@ router.put('/:id/draft', async (req: AuthRequest, res: Response): Promise<void> 
   }
   const { data } = req.body;
 
-  if (!data) {
-    res.status(400).json({ message: 'Brak danych taktyki' });
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    res.status(400).json({ message: 'Dane taktyki muszą być obiektem' });
     return;
   }
 
