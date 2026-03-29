@@ -4,11 +4,23 @@ import { authenticate, requireRole, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
+// Parsuje param URL do liczby dodatniej, zwraca null jeśli nieprawidłowy
+// string[] bo Express typuje req.params jako string | string[]
+const parseId = (param: string | string[] | undefined): number | null => {
+  const value = Array.isArray(param) ? param[0] : param;
+  const id = parseInt(value ?? '', 10);
+  return isNaN(id) || id <= 0 ? null : id;
+};
+
 router.use(authenticate);
 
 // GET /tactics/team/:teamId — pobierz taktykę drużyny
 router.get('/team/:teamId', async (req: AuthRequest, res: Response): Promise<void> => {
-  const teamId = parseInt(req.params['teamId'] as string);
+  const teamId = parseId(req.params['teamId']);
+  if (teamId === null) {
+    res.status(400).json({ message: 'Nieprawidłowe ID drużyny' });
+    return;
+  }
 
   try {
     // Sprawdź czy user ma dostęp do tej drużyny
@@ -60,7 +72,11 @@ router.post(
   '/team/:teamId',
   requireRole('admin', 'komisz'),
   async (req: AuthRequest, res: Response): Promise<void> => {
-    const teamId = parseInt(req.params['teamId'] as string);
+    const teamId = parseId(req.params['teamId']);
+    if (teamId === null) {
+      res.status(400).json({ message: 'Nieprawidłowe ID drużyny' });
+      return;
+    }
 
     try {
       const [teamRows]: any = await pool.query('SELECT id FROM teams WHERE id = ?', [teamId]);
@@ -97,7 +113,11 @@ router.post(
 
 // PUT /tactics/:id/draft — zapisz draft taktyki (właściciel drużyny)
 router.put('/:id/draft', async (req: AuthRequest, res: Response): Promise<void> => {
-  const tacticId = parseInt(req.params['id'] as string);
+  const tacticId = parseId(req.params['id']);
+  if (tacticId === null) {
+    res.status(400).json({ message: 'Nieprawidłowe ID taktyki' });
+    return;
+  }
   const { data } = req.body;
 
   if (!data) {
@@ -146,7 +166,11 @@ router.put('/:id/draft', async (req: AuthRequest, res: Response): Promise<void> 
 
 // PUT /tactics/:id/submit — wyślij taktykę do zatwierdzenia
 router.put('/:id/submit', async (req: AuthRequest, res: Response): Promise<void> => {
-  const tacticId = parseInt(req.params['id'] as string);
+  const tacticId = parseId(req.params['id']);
+  if (tacticId === null) {
+    res.status(400).json({ message: 'Nieprawidłowe ID taktyki' });
+    return;
+  }
 
   try {
     const [rows]: any = await pool.query(
@@ -198,7 +222,11 @@ router.put(
   '/:id/review',
   requireRole('admin', 'komisz'),
   async (req: AuthRequest, res: Response): Promise<void> => {
-    const tacticId = parseInt(req.params['id'] as string);
+    const tacticId = parseId(req.params['id']);
+    if (tacticId === null) {
+      res.status(400).json({ message: 'Nieprawidłowe ID taktyki' });
+      return;
+    }
 
     try {
       const [rows]: any = await pool.query(
@@ -238,7 +266,11 @@ router.put(
   '/:id/approve',
   requireRole('admin', 'komisz'),
   async (req: AuthRequest, res: Response): Promise<void> => {
-    const tacticId = parseInt(req.params['id'] as string);
+    const tacticId = parseId(req.params['id']);
+    if (tacticId === null) {
+      res.status(400).json({ message: 'Nieprawidłowe ID taktyki' });
+      return;
+    }
 
     try {
       const [rows]: any = await pool.query(
