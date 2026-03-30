@@ -54,8 +54,19 @@ router.delete(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const newsId = parseInt(req.params['id'] as string);
 
+    if (isNaN(newsId) || newsId <= 0) {
+      res.status(400).json({ message: 'Nieprawidłowe ID newsa' });
+      return;
+    }
+
     try {
-      await pool.query('DELETE FROM news WHERE id = ?', [newsId]);
+      const [result]: any = await pool.query('DELETE FROM news WHERE id = ?', [newsId]);
+
+      if (result.affectedRows === 0) {
+        res.status(404).json({ message: 'News nie istnieje' });
+        return;
+      }
+
       res.json({ message: 'News usunięty' });
     } catch (error) {
       console.error(error);

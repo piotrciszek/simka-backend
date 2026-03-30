@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import * as cheerio from 'cheerio';
+import iconv from 'iconv-lite';
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth';
 
 const router = Router();
@@ -12,7 +13,7 @@ const BOXES_DIR = (process.env.BOXES_DIR || path.join(process.cwd(), 'uploads/bo
 );
 const PBP_DIR = process.env.PBP_DIR || path.join(process.cwd(), 'uploads/pbp');
 
-router.get('/test', (req, res) => {
+router.get('/test', authenticate, (req, res) => {
   res.json({ ok: true });
 });
 // GET /boxes/day/:day — pobierz wyniki dnia
@@ -135,7 +136,7 @@ router.get(
 
     try {
       const raw = fs.readFileSync(filepath);
-      const html = require('iconv-lite').decode(raw, 'win1250');
+      const html = iconv.decode(raw, 'win1250');
       const $ = cheerio.load(html);
 
       const allNames: string[] = [];

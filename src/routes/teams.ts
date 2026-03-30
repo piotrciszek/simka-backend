@@ -43,6 +43,11 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
   const teamId = parseInt(req.params['id'] as string);
 
+  if (isNaN(teamId) || teamId <= 0) {
+    res.status(400).json({ message: 'Nieprawidłowe ID drużyny' });
+    return;
+  }
+
   try {
     const [rows]: any = await pool.query(
       `SELECT t.id, t.name, t.csv_team_name as "csvTeamName", t.logo_path, t.is_active, t.created_at,
@@ -122,6 +127,12 @@ router.put(
   requireRole('admin', 'komisz'),
   async (req: AuthRequest, res: Response): Promise<void> => {
     const teamId = parseInt(req.params['id'] as string);
+
+    if (isNaN(teamId) || teamId <= 0) {
+      res.status(400).json({ message: 'Nieprawidłowe ID drużyny' });
+      return;
+    }
+
     const { name, user_id, is_active } = req.body;
 
     try {
