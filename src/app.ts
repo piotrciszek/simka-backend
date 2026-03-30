@@ -13,6 +13,7 @@ import usersRoutes from './routes/users';
 import fs from 'fs';
 import path from 'path';
 import iconv from 'iconv-lite';
+import rateLimit from 'express-rate-limit';
 import serveIndex from 'serve-index';
 
 const app = express();
@@ -63,19 +64,21 @@ app.use('/uploads', (req, res, next) => {
   }
 });
 
+// Max 15 requestów/sekundę z jednego IP dla plików statycznych
+const staticRateLimit = rateLimit({
+  windowMs: 1000,
+  limit: 15,
+  message: { message: 'Zbyt wiele żądań, spróbuj za chwilę' },
+});
+
 app.use('/html/boxes', express.static(boxesDir));
 
-app.use('/csv', express.static(csvDir));
-app.use(
-  '/csv',
-  serveIndex(csvDir, {
-    icons: true,
-    view: 'details',
-  }),
-);
+app.use('/csv', staticRateLimit, express.static(csvDir));
+app.use('/csv', staticRateLimit, serveIndex(csvDir, { icons: true, view: 'details' }));
 
 app.use(
   '/pbp',
+  staticRateLimit,
   (req, res, next) => {
     if (req.path.endsWith('.txt')) {
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -85,10 +88,10 @@ app.use(
   express.static(pbpDir),
 );
 
-app.use('/save', express.static(saveDir));
-app.use('/save', serveIndex(saveDir, { icons: true, view: 'details' }));
+app.use('/save', staticRateLimit, express.static(saveDir));
+app.use('/save', staticRateLimit, serveIndex(saveDir, { icons: true, view: 'details' }));
 
-app.use('/img', express.static(imgDir));
+app.use('/img', staticRateLimit, express.static(imgDir));
 
 // Health check
 app.get('/health', (req, res) => {
