@@ -5,19 +5,19 @@ import { authenticate, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
-const save_DIR = process.env.SAVE_DIR || path.join(process.cwd(), 'uploads/save');
+const SAVE_DIR = process.env.SAVE_DIR || path.join(process.cwd(), 'uploads/save');
 
 router.get('/files', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    if (!fs.existsSync(save_DIR)) {
+    if (!fs.existsSync(SAVE_DIR)) {
       res.json([]);
       return;
     }
 
     const items = fs
-      .readdirSync(save_DIR)
+      .readdirSync(SAVE_DIR)
       .map(f => {
-        const stat = fs.statSync(path.join(save_DIR, f));
+        const stat = fs.statSync(path.join(SAVE_DIR, f));
         return {
           filename: f,
           size: stat.isDirectory() ? null : stat.size,

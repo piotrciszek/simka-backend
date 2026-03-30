@@ -34,6 +34,11 @@ router.post(
       return;
     }
 
+    if (title.length > 200 || content.length > 10000) {
+      res.status(400).json({ message: 'Tytuł max 200 znaków, treść max 10 000 znaków' });
+      return;
+    }
+
     try {
       const [result]: any = await pool.query(
         'INSERT INTO news (title, content, author_id) VALUES (?, ?, ?)',

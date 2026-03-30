@@ -17,11 +17,10 @@ router.get('/files', authenticate, async (req: AuthRequest, res: Response): Prom
     const files = fs
       .readdirSync(PBP_DIR)
       .filter(f => f.endsWith('.txt'))
-      .map(f => ({
-        filename: f,
-        size: fs.statSync(path.join(PBP_DIR, f)).size,
-        modifiedAt: fs.statSync(path.join(PBP_DIR, f)).mtime,
-      }))
+      .map(f => {
+        const stat = fs.statSync(path.join(PBP_DIR, f));
+        return { filename: f, size: stat.size, modifiedAt: stat.mtime };
+      })
       .sort((a, b) => b.modifiedAt.getTime() - a.modifiedAt.getTime());
 
     res.json(files);
