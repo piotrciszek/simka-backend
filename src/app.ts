@@ -12,7 +12,7 @@ import usersRoutes from './routes/users';
 
 import fs from 'fs';
 import path from 'path';
-import * as iconv from 'iconv-lite';
+import iconv from 'iconv-lite';
 import serveIndex from 'serve-index';
 
 const app = express();
