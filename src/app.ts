@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import boxesRouter from './routes/boxes';
 import csvRoutes from './routes/csv';
@@ -15,8 +14,6 @@ import fs from 'fs';
 import path from 'path';
 import * as iconv from 'iconv-lite';
 import serveIndex from 'serve-index';
-
-dotenv.config();
 
 const app = express();
 
