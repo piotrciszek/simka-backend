@@ -11,7 +11,26 @@ const BOXES_DIR = (process.env.BOXES_DIR || path.join(process.cwd(), 'uploads/bo
   /\\/g,
   '/',
 );
-const PBP_DIR = process.env.PBP_DIR || path.join(process.cwd(), 'uploads/pbp');
+
+// Parsuje HTML box score'a i zwraca [away, home] lub null jeśli nie znaleziono 2 drużyn
+function parseTeamsFromHtml(html: string): [{ name: string; score: string }, { name: string; score: string }] | null {
+  const $ = cheerio.load(html);
+  const teams: { name: string; score: string }[] = [];
+
+  $('table tr').each((i, row) => {
+    if (teams.length >= 2) return;
+    const cells = $(row).find('td font');
+    if (cells.length >= 2) {
+      const name = $(cells[0]).text().trim();
+      const score = $(cells[cells.length - 1]).text().trim();
+      if (name && score && /^\d+$/.test(score)) {
+        teams.push({ name, score });
+      }
+    }
+  });
+
+  return teams.length === 2 ? [teams[0], teams[1]] : null;
+}
 
 router.get('/test', authenticate, (req, res) => {
   res.json({ ok: true });
@@ -45,25 +64,9 @@ router.get(
 
         try {
           const html = fs.readFileSync(filepath, 'utf-8');
-          const $ = cheerio.load(html);
-          const teams: { name: string; score: string }[] = [];
-
-          $('table tr').each((i, row) => {
-            if (teams.length >= 2) return;
-            const cells = $(row).find('td font');
-            if (cells.length >= 2) {
-              const name = $(cells[0]).text().trim();
-              const score = $(cells[cells.length - 1])
-                .text()
-                .trim();
-              if (name && score && /^\d+$/.test(score)) {
-                teams.push({ name, score });
-              }
-            }
-          });
-
-          if (teams.length === 2) {
-            games.push({ gameNum, filename, away: teams[0], home: teams[1] });
+          const result = parseTeamsFromHtml(html);
+          if (result) {
+            games.push({ gameNum, filename, away: result[0], home: result[1] });
           }
         } catch (e) {
           console.error(`Błąd parsowania ${filename}`, e);
@@ -81,29 +84,9 @@ router.get(
 
       try {
         const html = fs.readFileSync(filepath, 'utf-8');
-        const $ = cheerio.load(html);
-        const teams: { name: string; score: string }[] = [];
-
-        $('table tr').each((i, row) => {
-          if (teams.length >= 2) return; // stop po znalezieniu 2 drużyn
-          const cells = $(row).find('td font');
-          if (cells.length >= 2) {
-            const name = $(cells[0]).text().trim();
-            const score = $(cells[cells.length - 1])
-              .text()
-              .trim();
-            if (name && score && /^\d+$/.test(score)) {
-              teams.push({ name, score });
-            }
-          }
-        });
-
-        if (teams.length === 2) {
-          games.push({
-            gameNum,
-            away: teams[0],
-            home: teams[1],
-          });
+        const result = parseTeamsFromHtml(html);
+        if (result) {
+          games.push({ gameNum, away: result[0], home: result[1] });
         }
       } catch (e) {
         console.error(`Błąd parsowania ${day}-${gameNum}.html`, e);
@@ -159,6 +142,12 @@ router.get(
         wins2: allWins[wi + 1] ?? '0',
       });
 
+      // Indeksy wynikają ze struktury playoffs.htm — każda seria ma 2 nazwy (table[width="100"])
+      // i 2 wyniki (table[width="20"]), ułożone w kolejności w HTML:
+      // R1W: 0,1(#1/#8) | 2,3(East#1/#8) | 4,5(R2W) | 6,7(R2E) | 8,9(#4/#5 West) | ...
+      // 10,11(#4/#5 East) | 12,13(CFW) | 14,15(CFE) | 16,17(Finals)
+      // 18,19(#2/#7 West) | 20,21(#2/#7 East) | 22,23(SF2 West) | 24,25(SF2 East)
+      // 27,28(#3/#6 West — uwaga: indeks 26 pominięty) | 29,30(#3/#6 East)
       const R1_SEEDS = ['#1/#8', '#4/#5', '#2/#7', '#3/#6'];
       const round1West = [p(0, 0), p(8, 8), p(18, 18), p(27, 26)].map((p, i) => ({
         ...p,
