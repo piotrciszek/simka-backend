@@ -5,8 +5,9 @@ const PORT = process.env.PORT || 3000;
 
 async function start() {
   try {
-    await pool.getConnection();
+    const connection = await pool.getConnection();
     console.log('Connected to the database successfully!');
+    connection.release();
 
     app.listen(PORT, () => {
       console.log(`Server is working on http://localhost:${PORT}`);
