@@ -104,4 +104,10 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// Globalny error handler - musi być ostatni, Express rozpoznaje go po 4 argumentach
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err);
+  res.status(500).json({ message: 'Wewnętrzny błąd serwera' });
+});
+
 export default app;
