@@ -41,6 +41,7 @@ uploads/
 
 - Node.js 18+
 - MySQL database
+- Docker Desktop
 
 ### Installation
 
@@ -79,13 +80,25 @@ Copy `.env.example` to `.env` and fill in your values:
 cp .env.example .env
 ```
 
-4. Run in development mode:
+4. Obtain the database dump from the project admin and place it at:
+
+```bash
+docker/init/01_dump.sql
+```
+
+5. Start the database:
+
+```bash
+docker compose up -d
+```
+
+6. Run in development mode:
 
 ```bash
 npm run dev
 ```
 
-5. Build for production:
+7. Build for production:
 
 ```bash
 npm run build
