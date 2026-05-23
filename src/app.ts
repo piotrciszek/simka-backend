@@ -6,6 +6,7 @@ import csvRoutes from './routes/csv';
 import newsRoutes from './routes/news';
 import pbpRoutes from './routes/pbp';
 import saveRoutes from './routes/save';
+import statsRoutes from './routes/stats';
 import tacticsRoutes from './routes/tactics';
 import teamsRoutes from './routes/teams';
 import usersRoutes from './routes/users';
@@ -22,6 +23,7 @@ const app = express();
 app.set('trust proxy', 1);
 const boxesDir = process.env.BOXES_DIR || path.join(__dirname, '../uploads/boxes');
 const csvDir = process.env.CSV_DIR || path.join(__dirname, '../uploads/csv');
+const statsDir = process.env.STATS_DIR || path.join(__dirname, '../uploads/stats');
 const pbpDir = process.env.PBP_DIR || path.join(__dirname, '../uploads/pbp');
 const saveDir = process.env.SAVE_DIR || path.join(__dirname, '../uploads/save');
 const imgDir = process.env.IMG_DIR || path.join(__dirname, '../uploads/img');
@@ -45,6 +47,7 @@ app.use('/csv', csvRoutes);
 app.use('/news', newsRoutes);
 app.use('/pbp', pbpRoutes);
 app.use('/save', saveRoutes);
+app.use('/stats', statsRoutes);
 app.use('/tactics', tacticsRoutes);
 app.use('/teams', teamsRoutes);
 app.use('/users', usersRoutes);
@@ -75,6 +78,9 @@ app.use('/html/boxes', express.static(boxesDir));
 
 app.use('/csv', staticRateLimit, express.static(csvDir));
 app.use('/csv', staticRateLimit, serveIndex(csvDir, { icons: true, view: 'details' }));
+
+app.use('/stats-files', staticRateLimit, express.static(statsDir));
+app.use('/stats-files', staticRateLimit, serveIndex(statsDir, { icons: true, view: 'details' }));
 
 app.use(
   '/pbp',
