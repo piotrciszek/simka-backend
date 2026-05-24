@@ -1,6 +1,7 @@
 export interface RawPlayerStats {
   Name: string;
   Team?: string;
+  Position?: string;
   Games?: string | number;
   Minutes?: string | number;
   FG?: string | number;
@@ -24,6 +25,7 @@ export interface CalculatedPlayerStats {
   // Podstawowe dane
   playerName: string;
   team: string;
+  position: string;
 
   // Raw stats z CSV
   games: number;
@@ -116,12 +118,14 @@ export function calculatePlayerStats(rawStats: RawPlayerStats): CalculatedPlayer
   // KROK 3: ShooterScore Algorithm
   const tsPercent = trueShootingPct * 100;
   const efgPercent = effectiveFgPct * 100;
-  const shooterScore = ((tsPercent * 0.7) + (efgPercent * 0.3)) * Math.sqrt(fga);
+  const fgaPerGame = games > 0 ? fga / games : 0;
+  const shooterScore = ((tsPercent * 0.7) + (efgPercent * 0.3)) * Math.sqrt(fgaPerGame);
 
   return {
     // Podstawowe dane
     playerName: rawStats.Name.trim(),
     team: rawStats.Team || 'Unknown',
+    position: rawStats.Position?.trim() || 'N/A',
 
     // Raw stats
     games,

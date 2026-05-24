@@ -36,7 +36,14 @@ router.get('/test', async (req: AuthRequest, res: Response): Promise<void> => {
 // GET /stats/advanced - Get advanced stats with optional filters
 router.get('/advanced', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const filters = req.query as any as StatsFilters;
+    // Bezpieczna walidacja query parameters
+    const filters: StatsFilters = {
+      team: req.query.team as string,
+      season: req.query.season as string,
+      position: req.query.position as string,
+      minGames: req.query.minGames ? Number(req.query.minGames) : undefined
+    };
+
     const { query, params } = buildStatsQuery(ADVANCED_STATS_COLUMNS, filters);
 
     const [rows] = await pool.execute(query, params);
@@ -104,8 +111,17 @@ router.get('/compare', async (req: AuthRequest, res: Response): Promise<void> =>
 // GET /stats/rankings/scorers - Get scorers ranking
 router.get('/rankings/scorers', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { minFGA = 5, season } = req.query;
-    const { query, params } = buildScorersRankingQuery(Number(minFGA), season as string);
+    // Walidacja parametru minFGA
+    const minFGAParam = req.query.minFGA as string;
+    const minFGA = minFGAParam ? Number(minFGAParam) : 5;
+
+    if (minFGAParam && (isNaN(minFGA) || minFGA < 0)) {
+      res.status(400).json({ message: 'Parametr minFGA musi być liczbą >= 0' });
+      return;
+    }
+
+    const season = req.query.season as string;
+    const { query, params } = buildScorersRankingQuery(minFGA, season);
 
     const [rows] = await pool.execute(query, params);
     const rankings = (rows as any[]).map((player, index) => ({
@@ -133,8 +149,6 @@ router.get('/players', async (req: AuthRequest, res: Response): Promise<void> =>
         ps.team as Team,
         'N/A' as Position
       FROM player_stats ps
-      JOIN csv_uploads cu ON ps.csv_upload_id = cu.id
-      WHERE cu.is_active = 1
       ORDER BY ps.player_name
     `;
 
