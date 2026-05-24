@@ -1,7 +1,8 @@
 import { Router, Response } from 'express';
 import pool from '../config/db';
-import { authenticate, AuthRequest } from '../middleware/auth';
+import { authenticate, AuthRequest, requireRole } from '../middleware/auth';
 import path from 'path';
+import fs from 'fs';
 import {
   PlayerStat,
   ScorerRanking,
@@ -145,8 +146,42 @@ router.get('/players', async (req: AuthRequest, res: Response): Promise<void> =>
   }
 });
 
+// GET /stats/files - Lista plików CSV ze statystykami (admin/komisz)
+router.get(
+  '/files',
+  requireRole('admin', 'komisz'),
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const statsDir = process.env.STATS_DIR || path.join(__dirname, '../../uploads/stats');
+
+      if (!fs.existsSync(statsDir)) {
+        res.json([]);
+        return;
+      }
+
+      const items = fs
+        .readdirSync(statsDir)
+        .filter(f => f.endsWith('.csv')) // Tylko pliki CSV
+        .map(f => {
+          const stat = fs.statSync(path.join(statsDir, f));
+          return {
+            filename: f,
+            size: stat.size,
+            modifiedAt: stat.mtime,
+          };
+        })
+        .sort((a, b) => b.modifiedAt.getTime() - a.modifiedAt.getTime()); // Najnowsze pierwsze
+
+      res.json(items);
+    } catch (error) {
+      console.error('Error reading stats directory:', error);
+      res.status(500).json({ message: 'Błąd odczytu folderu ze statystykami' });
+    }
+  }
+);
+
 // POST /stats/generate-from-file - Generate player stats from stats CSV file
-router.post('/generate-from-file', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/generate-from-file', requireRole('admin', 'komisz'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { filename, season, csvUploadId } = req.body;
 
@@ -178,10 +213,9 @@ router.post('/generate-from-file', async (req: AuthRequest, res: Response): Prom
     });
 
     res.json({
-      message: `Generated stats for ${processedPlayers} players`,
+      message: `Statystyki wygenerowane pomyślnie`,
       playersProcessed: processedPlayers,
-      season: season,
-      filename: filename
+      statsGenerated: calculatedStats.length
     });
 
   } catch (error) {
