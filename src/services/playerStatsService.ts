@@ -47,6 +47,7 @@ export async function savePlayerStats(
       const values = batch.map(stats => [
         stats.playerName,
         stats.team,
+        stats.position,
         options.csvUploadId || 0,
         options.season,
         stats.games,
@@ -83,7 +84,7 @@ export async function savePlayerStats(
 
       // Tworzenie placeholderów dla tego batch'a
       const placeholders = values
-        .map(() => '(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+        .map(() => '(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
         .join(',');
 
       // Spłaszczenie tablicy wartości
@@ -92,7 +93,7 @@ export async function savePlayerStats(
       // Prosty batch INSERT (bez ON DUPLICATE KEY - już wyczyściliśmy stare dane)
       const batchInsertQuery = `
         INSERT INTO player_stats (
-          player_name, team, csv_upload_id, season,
+          player_name, team, position, csv_upload_id, season,
           games, minutes, fg, fga, ft, fta, three_p, three_pa,
           points, rebounds, oreb, assists, steals, blocks, turnovers, fouls,
           fg_pct, ft_pct, three_p_pct, true_shooting_pct, effective_fg_pct,
