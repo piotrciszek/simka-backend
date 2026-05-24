@@ -15,76 +15,106 @@ export interface SaveStatsOptions {
  */
 export async function savePlayerStats(
   playerStats: CalculatedPlayerStats[],
-  options: SaveStatsOptions
+  options: SaveStatsOptions,
 ): Promise<number> {
   // Import pool inside function to avoid env variable issues during module loading
   const pool = (await import('../config/db')).default;
-  let processedPlayers = 0;
 
-
-  const insertQuery = `
-    INSERT INTO player_stats (
-      player_name, team, csv_upload_id, season,
-      games, minutes, fg, fga, ft, fta, three_p, three_pa,
-      points, rebounds, oreb, assists, steals, blocks, turnovers, fouls,
-      fg_pct, ft_pct, three_p_pct, true_shooting_pct, effective_fg_pct,
-      efficiency, ast_to_ratio, usage_rate, possessions, points_per_possession,
-      shooter_score, pie, source_file, source_type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE
-      games = VALUES(games), minutes = VALUES(minutes),
-      fg = VALUES(fg), fga = VALUES(fga), ft = VALUES(ft), fta = VALUES(fta),
-      three_p = VALUES(three_p), three_pa = VALUES(three_pa),
-      points = VALUES(points), rebounds = VALUES(rebounds), oreb = VALUES(oreb),
-      assists = VALUES(assists), steals = VALUES(steals), blocks = VALUES(blocks),
-      turnovers = VALUES(turnovers), fouls = VALUES(fouls), fg_pct = VALUES(fg_pct), ft_pct = VALUES(ft_pct),
-      three_p_pct = VALUES(three_p_pct), true_shooting_pct = VALUES(true_shooting_pct),
-      effective_fg_pct = VALUES(effective_fg_pct), efficiency = VALUES(efficiency),
-      ast_to_ratio = VALUES(ast_to_ratio), usage_rate = VALUES(usage_rate),
-      possessions = VALUES(possessions), points_per_possession = VALUES(points_per_possession),
-      shooter_score = VALUES(shooter_score), pie = VALUES(pie)
-  `;
-
-  for (const stats of playerStats) {
-    await pool.execute(insertQuery, [
-      stats.playerName,
-      stats.team,
-      options.csvUploadId || 0,
-      options.season,
-      stats.games,
-      stats.minutes,
-      stats.fg,
-      stats.fga,
-      stats.ft,
-      stats.fta,
-      stats.threeP,
-      stats.threePA,
-      stats.points,
-      stats.rebounds,
-      stats.oreb,
-      stats.assists,
-      stats.steals,
-      stats.blocks,
-      stats.turnovers,
-      stats.fouls,
-      stats.fgPct,
-      stats.ftPct,
-      stats.threePPct,
-      stats.trueShootingPct,
-      stats.effectiveFgPct,
-      stats.efficiency,
-      stats.astToRatio,
-      stats.usageRate,
-      stats.possessions,
-      stats.pointsPerPossession,
-      stats.shooterScore,
-      stats.pie,
-      options.sourceFile,
-      options.sourceType
-    ]);
-
-    processedPlayers++;
+  if (playerStats.length === 0) {
+    return 0;
   }
 
-  return processedPlayers;
+  // Rozpocznij transakcję dla lepszej wydajności
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // KROK 1: Wyczyść wszystkie stare statystyki dla tego sezonu
+    const [deleteResult] = await connection.execute(
+      'DELETE FROM player_stats WHERE season = ?',
+      [options.season]
+    );
+
+    // KROK 2: Przetwarzaj nowe dane w mniejszych batch'ach (100 rekordów naraz)
+    const batchSize = 100;
+    let totalProcessed = 0;
+
+    for (let i = 0; i < playerStats.length; i += batchSize) {
+      const batch = playerStats.slice(i, i + batchSize);
+
+      // Przygotowanie wartości dla batch INSERT
+      const values = batch.map(stats => [
+        stats.playerName,
+        stats.team,
+        options.csvUploadId || 0,
+        options.season,
+        stats.games,
+        stats.minutes,
+        stats.fg,
+        stats.fga,
+        stats.ft,
+        stats.fta,
+        stats.threeP,
+        stats.threePA,
+        stats.points,
+        stats.rebounds,
+        stats.oreb,
+        stats.assists,
+        stats.steals,
+        stats.blocks,
+        stats.turnovers,
+        stats.fouls,
+        stats.fgPct,
+        stats.ftPct,
+        stats.threePPct,
+        stats.trueShootingPct,
+        stats.effectiveFgPct,
+        stats.efficiency,
+        stats.astToRatio,
+        stats.usageRate,
+        stats.possessions,
+        stats.pointsPerPossession,
+        stats.shooterScore,
+        stats.pie,
+        options.sourceFile,
+        options.sourceType,
+      ]);
+
+      // Tworzenie placeholderów dla tego batch'a
+      const placeholders = values
+        .map(() => '(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+        .join(',');
+
+      // Spłaszczenie tablicy wartości
+      const flatValues = values.flat();
+
+      // Prosty batch INSERT (bez ON DUPLICATE KEY - już wyczyściliśmy stare dane)
+      const batchInsertQuery = `
+        INSERT INTO player_stats (
+          player_name, team, csv_upload_id, season,
+          games, minutes, fg, fga, ft, fta, three_p, three_pa,
+          points, rebounds, oreb, assists, steals, blocks, turnovers, fouls,
+          fg_pct, ft_pct, three_p_pct, true_shooting_pct, effective_fg_pct,
+          efficiency, ast_to_ratio, usage_rate, possessions, points_per_possession,
+          shooter_score, pie, source_file, source_type
+        ) VALUES ${placeholders}
+      `;
+
+      await connection.execute(batchInsertQuery, flatValues);
+      totalProcessed += batch.length;
+    }
+
+    // Zatwierdź transakcję
+    await connection.commit();
+    return totalProcessed;
+
+  } catch (error) {
+    // W przypadku błędu - rollback
+    await connection.rollback();
+    throw error;
+  } finally {
+    // Zwolnij połączenie
+    connection.release();
+  }
 }

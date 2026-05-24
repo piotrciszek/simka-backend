@@ -190,6 +190,9 @@ router.post('/generate-from-file', requireRole('admin', 'komisz'), async (req: A
       return;
     }
 
+    // Wygeneruj csvUploadId z nazwy pliku (bez rozszerzenia)
+    const actualCsvUploadId = csvUploadId || path.parse(filename).name;
+
     // Parsowanie CSV
     const statsDir = process.env.STATS_DIR || path.join(__dirname, '../../uploads/stats');
     const csvFilePath = path.join(statsDir, filename);
@@ -204,10 +207,10 @@ router.post('/generate-from-file', requireRole('admin', 'komisz'), async (req: A
     // Obliczanie statystyk dla każdego gracza
     const calculatedStats = rawStatsRows.map(row => calculatePlayerStats(row));
 
-    // Zapis do bazy
+    // Zapis do bazy (z czyszczeniem starych danych)
     const processedPlayers = await savePlayerStats(calculatedStats, {
       season,
-      csvUploadId: csvUploadId || 0,
+      csvUploadId: actualCsvUploadId,
       sourceFile: filename,
       sourceType: 'csv'
     });
