@@ -18,7 +18,7 @@ router.post('/login', async (req, res): Promise<void> => {
   try {
     // tylko potrzebne kolumny
     const [rows]: any = await pool.query(
-      'SELECT id, username, role, password_hash, must_change_password FROM users WHERE username = ? AND is_active = true',
+      'SELECT id, username, role, password_hash, must_change_password, can_access_synergy FROM users WHERE username = ? AND is_active = true',
       [username],
     );
 
@@ -56,6 +56,7 @@ router.post('/login', async (req, res): Promise<void> => {
         id: user.id,
         username: user.username,
         role: user.role,
+        canAccessSynergy: user.can_access_synergy || false,
       },
     });
   } catch (error) {
