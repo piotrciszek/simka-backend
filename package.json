@@ -23,7 +23,6 @@
     "express-rate-limit": "^8.3.2",
     "iconv-lite": "^0.7.2",
     "jsonwebtoken": "^9.0.3",
-    "multer": "^2.1.1",
     "mysql2": "^3.18.2",
     "serve-index": "^1.9.2"
   },
@@ -34,7 +33,6 @@
     "@types/express": "^5.0.6",
     "@types/iconv-lite": "^0.0.1",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/multer": "^2.0.0",
     "@types/node": "^25.3.3",
     "@types/serve-index": "^1.9.4",
     "nodemon": "^3.1.14",
