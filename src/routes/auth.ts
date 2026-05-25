@@ -56,7 +56,7 @@ router.post('/login', async (req, res): Promise<void> => {
         id: user.id,
         username: user.username,
         role: user.role,
-        canAccessSynergy: user.can_access_synergy || false,
+        canAccessSynergy: user.can_access_synergy,
       },
     });
   } catch (error) {
