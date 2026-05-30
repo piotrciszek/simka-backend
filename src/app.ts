@@ -16,6 +16,7 @@ import path from 'path';
 import iconv from 'iconv-lite';
 import rateLimit from 'express-rate-limit';
 import serveIndex from 'serve-index';
+import { swaggerUi, specs } from './config/swagger';
 
 const app = express();
 
@@ -39,6 +40,15 @@ app.use(
 );
 
 app.use(express.json());
+
+// Swagger dokumentacja
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'SimBasket API Documentation'
+  }));
+}
 
 // Routes
 app.use('/auth', authRoutes);

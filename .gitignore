@@ -16,6 +16,9 @@ uploads/pbp/
 uploads/html/
 uploads/csv/
 
+# Migrations
+migrations/
+
 # Logs
 logs/
 *.log

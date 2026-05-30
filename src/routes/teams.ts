@@ -6,8 +6,60 @@ const router = Router();
 
 router.use(authenticate);
 
-// GET /teams — lista drużyn
-// admin/komisz widzi wszystkie, user widzi tylko swoje
+/**
+ * @swagger
+ * /teams:
+ *   get:
+ *     summary: Lista drużyn
+ *     description: Zwraca listę drużyn. Admin/komisz widzą wszystkie, user tylko swoje.
+ *     tags: [Teams]
+ *     responses:
+ *       200:
+ *         description: Lista drużyn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   name:
+ *                     type: string
+ *                     example: Lakers
+ *                   csvTeamName:
+ *                     type: string
+ *                     example: los_angeles_lakers
+ *                     description: Nazwa drużyny z plików CSV
+ *                   logo_path:
+ *                     type: string
+ *                     nullable: true
+ *                     example: /uploads/logos/lakers.png
+ *                   is_active:
+ *                     type: boolean
+ *                     example: true
+ *                   created_at:
+ *                     type: string
+ *                     format: date-time
+ *                   owner_username:
+ *                     type: string
+ *                     example: john_doe
+ *                     description: Nazwa właściciela drużyny
+ *       401:
+ *         description: Brak autoryzacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     let rows: any;
