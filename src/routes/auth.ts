@@ -6,7 +6,83 @@ import { authenticate, requireRole, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
-// POST /auth/login
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Logowanie użytkownika
+ *     description: Weryfikuje dane logowania i zwraca JWT token
+ *     tags: [Authentication]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - password
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: admin
+ *                 description: Nazwa użytkownika
+ *               password:
+ *                 type: string
+ *                 example: password123
+ *                 description: Hasło użytkownika
+ *     responses:
+ *       200:
+ *         description: Pomyślne logowanie
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                   description: JWT token do autoryzacji
+ *                 mustChangePassword:
+ *                   type: boolean
+ *                   example: false
+ *                   description: Czy użytkownik musi zmienić hasło
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     username:
+ *                       type: string
+ *                       example: admin
+ *                     role:
+ *                       type: string
+ *                       enum: [admin, komisz, user]
+ *                       example: admin
+ *                     canAccessSynergy:
+ *                       type: boolean
+ *                       example: true
+ *       400:
+ *         description: Brak wymaganych danych
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Nieprawidłowe dane logowania
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/login', async (req, res): Promise<void> => {
   const { username, password } = req.body;
 
@@ -65,7 +141,62 @@ router.post('/login', async (req, res): Promise<void> => {
   }
 });
 
-// POST /auth/change-password
+/**
+ * @swagger
+ * /auth/change-password:
+ *   post:
+ *     summary: Zmiana hasła użytkownika
+ *     description: Pozwala zalogowanemu użytkownikowi zmienić swoje hasło
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 example: oldpassword123
+ *                 description: Aktualne hasło użytkownika
+ *               newPassword:
+ *                 type: string
+ *                 example: newpassword123
+ *                 description: Nowe hasło (minimum 8 znaków)
+ *                 minLength: 8
+ *     responses:
+ *       200:
+ *         description: Hasło zostało pomyślnie zmienione
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Hasło zostało zmienione
+ *       400:
+ *         description: Nieprawidłowe dane wejściowe
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Nieprawidłowe aktualne hasło lub brak autoryzacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post(
   '/change-password',
   authenticate,

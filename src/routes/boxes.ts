@@ -4,6 +4,7 @@ import path from 'path';
 import * as cheerio from 'cheerio';
 import iconv from 'iconv-lite';
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth';
+import pool from '../config/db';
 
 const router = Router();
 

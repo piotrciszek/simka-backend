@@ -14,7 +14,60 @@ const parseId = (param: string | string[] | undefined): number | null => {
 
 router.use(authenticate);
 
-// GET /tactics/team/:teamId — pobierz taktykę drużyny
+/**
+ * @swagger
+ * /tactics/team/{teamId}:
+ *   get:
+ *     summary: Pobierz taktykę drużyny
+ *     description: Zwraca aktualną taktykę dla wskazanej drużyny. User może tylko swoją drużynę, komisz/admin wszystkie.
+ *     tags: [Tactics]
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: ID drużyny
+ *         example: 5
+ *     responses:
+ *       200:
+ *         description: Dane taktyki
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Tactic'
+ *       400:
+ *         description: Nieprawidłowe ID drużyny
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Brak autoryzacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Brak uprawnień do drużyny
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Drużyna nie istnieje
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/team/:teamId', async (req: AuthRequest, res: Response): Promise<void> => {
   const teamId = parseId(req.params['teamId']);
   if (teamId === null) {
