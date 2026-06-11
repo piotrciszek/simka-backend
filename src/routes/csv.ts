@@ -332,7 +332,7 @@ router.get('/players-full', async (req: AuthRequest, res: Response): Promise<voi
       params.push(team);
     }
 
-    query += ' ORDER BY p.team, p.position, p.last_name, p.first_name';
+    query += ' ORDER BY p.first_name, p.last_name';
 
     const [rows] = await pool.execute(query, params);
 

@@ -164,10 +164,10 @@ export function buildPlayerComparisonQuery(
     SELECT ${COMPARISON_STATS_COLUMNS}
     ${PER_GAME_STATS_FROM}
       AND ps.player_name IN (${placeholders})
-    ORDER BY FIELD(ps.player_name, ${placeholders})
+    ORDER BY ps.player_name
   `;
 
-  const params = [...playerNames, ...playerNames];
+  const params = [...playerNames];
   return { query, params };
 }
 
