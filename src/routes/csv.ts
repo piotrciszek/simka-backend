@@ -74,7 +74,6 @@ router.get(
 // GET /csv/files — lista plików CSV dostępnych na serwerze
 router.get(
   '/files',
-  requireRole('admin', 'komisz'),
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       // const csvDir = '/public_html/csv';  //PROD ONLY
@@ -256,10 +255,9 @@ router.post(
   },
 );
 
-// GET /csv/file/:filename — zwraca surowy plik CSV jako tekst (admin/komisz)
+// GET /csv/file/:filename — zwraca surowy plik CSV jako tekst
 router.get(
   '/file/:filename',
-  requireRole('admin', 'komisz'),
   (req: AuthRequest, res: Response): void => {
     const filename = String(req.params['filename']);
 
