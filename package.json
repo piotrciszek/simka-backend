@@ -25,6 +25,7 @@
     "express-rate-limit": "^8.3.2",
     "iconv-lite": "^0.7.2",
     "jsonwebtoken": "^9.0.3",
+    "mdb-reader": "^3.2.0",
     "mysql2": "^3.18.2",
     "serve-index": "^1.9.2",
     "swagger-jsdoc": "^6.3.0",
