@@ -3,9 +3,11 @@ import cors from 'cors';
 import authRoutes from './routes/auth';
 import boxesRouter from './routes/boxes';
 import csvRoutes from './routes/csv';
+import mdbRoutes from './routes/mdb';
 import newsRoutes from './routes/news';
 import pbpRoutes from './routes/pbp';
 import saveRoutes from './routes/save';
+import standingsRoutes from './routes/standings';
 import statsRoutes from './routes/stats';
 import tacticsRoutes from './routes/tactics';
 import teamsRoutes from './routes/teams';
@@ -54,6 +56,7 @@ if (process.env.NODE_ENV !== 'production') {
 app.use('/auth', authRoutes);
 app.use('/boxes', boxesRouter);
 app.use('/csv', csvRoutes);
+app.use('/mdb', mdbRoutes);
 app.use('/news', newsRoutes);
 app.use('/pbp', pbpRoutes);
 app.use('/save', saveRoutes);
@@ -83,6 +86,11 @@ const staticRateLimit = rateLimit({
   limit: 15,
   message: { message: 'Zbyt wiele żądań, spróbuj za chwilę' },
 });
+
+// Nowe endpointy API montujemy pod /api — Angular jest serwowany z tej samej domeny
+// i ma własne trasy (np. /standings), więc bez prefiksu odświeżenie strony zwróciłoby JSON.
+// Publiczny (bez logowania) — montowany tutaj, bo potrzebuje staticRateLimit zdefiniowanego wyżej.
+app.use('/api/standings', staticRateLimit, standingsRoutes);
 
 app.use('/html/boxes', express.static(boxesDir));
 
